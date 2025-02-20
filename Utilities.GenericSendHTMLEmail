@@ -1,0 +1,71 @@
+/********************************************************************************
+Description.. :	Sends email with body as HTML
+
+Parameters... :	- 
+
+Returns...... :	.T. if sent
+				.F. if not sent
+				
+
+Author....... :	JONAS
+Date......... : 2021-04-14
+********************************************************************************
+_______________________________________________________________________________
+
+Ticket #..... :	
+Modification. : 
+Author....... :	
+Date......... :	
+_______________________________________________________________________________
+********************************************************************************/;
+:PARAMETERS sRecipients, sSenderEmail, sSubject, sBody, sAttachmentList, sCC, sBCC, sReplyToAddr, bSendProdOnly;
+:DEFAULT bSendProdOnly, .T.;
+
+:DECLARE aSmtpConfig, aEmails, sSMTPPwd, bUseSSL, sMsg, sGuid, sWhere, bUseSSL, bUseHTML, Environ;
+
+bUseSSL := .T.;
+bUseHTML := .T.;
+
+sRecipients := ExecFunction("Anandia_Utilities.ExtractGroupEmails", {sRecipients});
+
+Environ := SQLExecute("select VALUE from LIMSENTERPRISESETTINGS where SETTINGNAME = 'SDMS_URL'", "DICTIONARY");
+
+
+:IF StrSrch('aliprod', Environ[1][1]) = 0 .AND. bSendProdOnly;
+	:RETURN .F.;
+:ENDIF;
+
+
+/* region Set SMTP values for all emails;
+aSmtpConfig := SQLExecute("select EMAILSMTP, SMTP_PORT, SMTP_USER, SMTP_PASSWORD, SMTP_SSL 
+                            from CONFIGURATIONS");
+:IF Len(aSmtpConfig) = 0 .or. Empty(aSmtpConfig[1][1]);
+	/*RaiseError("SMTP Server not configured");
+	:RETURN .F.;
+:ENDIF;
+/*endregion;
+/*region Password Encryption;
+
+/* get the password, and try to decrypt it. If it does not decrypt, then it's because it's not encrypted so we force re-encryption;
+sSMTPPwd := DecryptData( aSmtpConfig[1][4], aSmtpConfig[1][3] );
+:IF Empty(sSMTPPwd);
+	sSMTPPwd := aSmtpConfig[1][4];
+:ENDIF;
+/*endregion;
+	:DECLARE isEmailSent;
+	isEmailSent := SendLimsEmail(aSmtpConfig[1,1], BuildArray(sRecipients), sSenderEmail, sSubject, sBody, BuildArray(sAttachmentList), BuildArray(sCC), BuildArray(sBCC), sReplyToAddr,
+				aSmtpConfig[1,2],
+				aSmtpConfig[1,3],
+				sSMTPPwd,
+				NIL,
+				NIL,
+				NIL,
+				bUseSSL,
+				bUseHTML,
+				NIL);
+
+:IF !isEmailSent;
+	SendToOutbox(aSmtpConfig[1,1],BuildArray(sRecipients),sSenderEmail,sSubject,sBody,BuildArray(sAttachmentList),BuildArray(sCC),BuildArray(sBCC),sReplyToAddr,aSmtpConfig[1,2],aSmtpConfig[1,3],sSMTPPwd,,bUseSSL);
+:ENDIF;
+
+:RETURN isEmailSent;

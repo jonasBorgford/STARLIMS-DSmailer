@@ -1,0 +1,67 @@
+/********************************************************************************
+Description.. :	Same as DSToArray but includes the header row.
+
+Parameters... :	- 
+
+Returns...... :	- 
+
+Author....... :	JONAS
+Date......... : 2021-04-14
+********************************************************************************
+_______________________________________________________________________________
+
+Ticket #..... :	
+Modification. : 
+Author....... :	
+Date......... :	
+_______________________________________________________________________________
+********************************************************************************/;
+:PARAMETERS dataSet, columns;
+:DECLARE i;
+
+
+:TRY;
+	:IF Empty(columns);
+		/*read all columns;
+		columns := ArrayNew(dataSet:Tables[0]:Columns:Count);
+		:FOR i:=0 :TO dataSet:Tables[0]:Columns:Count-1;
+			columns[i+1] := dataSet:Tables[0]:Columns[i]:ColumnName;
+		:NEXT;
+	:ELSE;
+		/*just one columns -> make it array;
+		:IF LimsTypeEx(columns)=="STRING";
+			columns := {columns};
+		:ENDIF;
+	:ENDIF;
+	:IF dataSet:Tables[0]:Rows:Count < 1;
+		:RETURN {};
+	:ENDIF;
+:CATCH;
+	:RETURN {};
+:ENDTRY;
+	
+:DECLARE dataTable, array, j;
+dataTable := dataSet:Tables[0];
+array := ArrayNew(dataSet:Tables[0]:Rows:Count + 1);
+array[1] := ArrayNew(Len(columns));
+
+
+/*input column headers;
+:FOR i:=0 :TO dataSet:Tables[0]:Columns:Count-1;
+	array[1][i+1] := dataSet:Tables[0]:Columns[i]:ColumnName;
+:NEXT;
+
+/*input data;
+:FOR i:=1 :TO dataSet:Tables[0]:Rows:Count;
+	array[i+1] := ArrayNew(Len(columns));
+	:FOR j:=1 :TO Len(columns);
+		/*read only the specified columns;
+		:IF dataSet:Tables[0]:Rows[i-1]:IsNull(columns[j]);
+			array[i+1][j] := NIL;
+		:ELSE;
+			array[i+1][j] := dataSet:Tables[0]:Rows[i-1][columns[j]];
+		:ENDIF;
+	:NEXT;
+:NEXT;
+
+:RETURN array;

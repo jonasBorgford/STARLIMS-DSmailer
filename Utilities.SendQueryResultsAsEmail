@@ -1,0 +1,60 @@
+/********************************************************************************
+Description.. :	
+
+Parameters... :	sDataSouce - Name of the datasource
+				aParams - passed as arguments to the datasource
+				aRecipientList - list of email addresses to send to 
+				sSubject - subject line of email (sDataSource is used as subject if ommitted)
+				BodyBeforeTab - Body of email before the table with query results
+				BodyAfterTab - Body of email after the table with query results
+				
+
+Returns...... :	.T. on success
+				.F. if error
+
+Author....... :	JONAS
+Date......... : 2021-04-14
+********************************************************************************
+_______________________________________________________________________________
+
+Ticket #..... :	
+Modification. : 
+Author....... :	
+Date......... :	
+_______________________________________________________________________________
+********************************************************************************/;
+:PARAMETERS sDataSource, aParams, sRecipientList, sSubject,BodyBeforeTab, BodyAfterTab, bDontSendInDevTest;
+:DEFAULT aParams, {};
+:DEFAULT sDataSource, "";
+:DEFAULT sSubject, "";
+:DEFAULT BodyAfterTab, "";
+:DEFAULT BodyBeforeTab, "";
+:DEFAULT bDontSendInDevTest, .T.;
+:DECLARE Results;
+
+
+:IF sDataSource == "";
+	:RETURN .F.;
+:ENDIF;
+:IF sSubject == "";
+	sSubject := sDataSource;
+:ENDIF;
+Results := RunDS(sDataSource, aParams, .T.);
+:IF LimsTypeEx(Results) = "STRING";
+	Results:= ExecFunction("DataSetSupport.Utils.DSFromString", {Results});
+:ENDIF;
+:IF LimsTypeEx(Results) = "OBJECT";
+	Results := ExecFunction("Utilities.DSToArrayWithHeaders", {Results});
+:ENDIF;
+:IF Results == {};
+	usrmes("No results in query");
+	:RETURN .F.;
+:ENDIF;
+:IF LimsTypeEx(Results) = "ARRAY";
+	Results := ExecFunction("Utilities.2DArrayToHTMLTable", {Results});
+:ENDIF;
+:IF Results = .F.;
+	:RETURN;
+:ENDIF;
+Results := BodyBeforeTab + Results + BodyAfterTab;
+:RETURN ExecFunction("Utilities.GenericSendHTMLEmail",{sRecipientList, "LIMS@mydomain.ca", sSubject, Results,"", "","", "LIMS@mydomain.ca", bDontSendInDevTest});
